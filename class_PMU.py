@@ -167,9 +167,9 @@ class PMU:
         elif FRMTbit1 ==1:
             FORMAT_PHASOR = 'float'
 
-        if FRMTbit2 ==0:
+        if FRMTbit0 ==0:
             PHASOR_NOTATION = 'rectangular'
-        elif FRMTbit2 ==1:
+        elif FRMTbit0 ==1:
             PHASOR_NOTATION = 'polar'
 
         PHNMRread = cgf2frame[40:42]
