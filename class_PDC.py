@@ -65,6 +65,7 @@ class PDC:
         self.CHK = None
         self.dfCFG2 = None
         self.dfPMU_info = None
+        self.isReading=False
 
     def __open_socket(self):
         self.PMUSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -618,16 +619,17 @@ class PDC:
         # =====================================================
         #                       FOR LOOP
         # =====================================================
-        ##repeat as many times as pmus in pmu/pdc
+        ## repeat as many times as pmus in pmu/pdc
         for pmu_num in range(1, dictCFG2_NUM_PMU['value'] + 1):
-            # =====================================================
-            #                       STN
-            # =====================================================
+        # =====================================================
+        #                       STN
+        # =====================================================
             beginingByte = endingByte
             endingByte = beginingByte + 16
             fldvalue = cfg2frame[beginingByte:endingByte]
             dictCFG2_STN = {'field': 'PMU{}_STN'.format(pmu_num), 'value': fldvalue.decode(), 'hex_val': fldvalue,
                             'size': endingByte - beginingByte, 'begin': beginingByte, 'end': endingByte}
+            
             # =====================================================
             #                       IDCODE
             # =====================================================
@@ -1059,8 +1061,9 @@ class PDC:
         self.send_command('start')
 
         self.dataframe_raw = self.PMUSocket.recv(self.buffersize)
+        data = self.dataframe_raw
+        #print(data[:1].hex())
 
-        return (self.dataframe_raw, False)
         if data[:1].hex() == 'aa':
             # get the framesize
             framesizebytes = data[2:4]
@@ -1863,6 +1866,7 @@ class PDC:
 
     def start_reading(self, max_rows=None):
         self.event_stop_reading.clear()
+        self.isReading=True
         # self.thread = Thread(target=self.__read_dataframes_continuously, args=(self.event_stop_reading, max_rows),
         #                      daemon=True)
         # # run the thread
@@ -1871,10 +1875,12 @@ class PDC:
 
     def stop_reading(self):
         self.event_stop_reading.set()
-        self.thread.join()
+        self.isReading=False
+        
 
     def __read_dataframes_continuously(self, event, max_rows):
         while True:
+            print(event.is_set())
             self.read_dataframe()
             if not max_rows is None:
                 # pop first registers
@@ -1885,7 +1891,8 @@ class PDC:
                     self.dataframes_read.drop(indexes_to_drop, inplace=True)
 
             if event.is_set():
-                break
+                #break
+                pass
             #to allow threads to switch
             time.sleep(0.01)
 
